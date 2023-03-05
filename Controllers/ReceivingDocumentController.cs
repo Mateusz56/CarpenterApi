@@ -79,6 +79,50 @@ namespace CarpenterAPI.Controllers
             return Ok(document);
         }
 
+        [HttpPost("{id:int}")]
+        public IActionResult Validate(int id)
+        {
+            var document = repository.GetByID(id);
+
+            if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
+                return Forbid();
+
+            document.Status = ReceivingDocumentStatus.Accepted;
+            document.ValidationDate = DateTime.Now;
+
+            // increase inventory
+            repository.Save();
+            return Ok(document);
+        }
+
+        [HttpPatch("{id:int}")]
+        public IActionResult Reject(int id)
+        {
+            var document = repository.GetByID(id);
+
+            if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
+                return Forbid();
+
+            document.Status = ReceivingDocumentStatus.Rejected;
+
+            repository.Save();
+            return Ok(document);
+        }
+
+        [HttpPatch("archive/{id:int}")]
+        public IActionResult Archive(int id)
+        {
+            var document = repository.GetByID(id);
+
+            if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
+                return Forbid();
+
+            document.Status = ReceivingDocumentStatus.Archived;
+
+            repository.Save();
+            return Ok(document);
+        }
+
         // DELETE api/<ReceivingDocumentController>/5
         [HttpDelete("{id}")]
         public void Delete(int id)  
