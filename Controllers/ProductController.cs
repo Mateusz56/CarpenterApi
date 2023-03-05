@@ -1,9 +1,11 @@
 ﻿using CarpenterAPI.Data;
 using CarpenterAPI.Models;
 using CarpenterAPI.Models.Product;
+using CarpenterAPI.Repository;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace CarpenterAPI.Controllers
 {
@@ -11,49 +13,28 @@ namespace CarpenterAPI.Controllers
     [Route("[controller]")]
     public class ProductController : Controller
     {
-        private readonly APIDBContext dbContext;
+        private readonly ProductRepository repository;
 
         public ProductController(APIDBContext dbContext)
         {
-            this.dbContext = dbContext;
-        }
-
-        private ProductDTO ConvertToProductDTO(Product product)
-        {
-            return new ProductDTO
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                ProductType = product.ProductType,
-                ProductTypeName = Enum.GetName(typeof(ProductType), product.ProductType)
-            };
+            repository = new ProductRepository(dbContext);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetProduct([FromQuery] Paging page,[FromQuery] ProductFilters filters)
+        public IActionResult GetProduct([FromQuery] Paging page,[FromQuery] ProductFilters filters)
         {
-            IQueryable<Product> products = dbContext.Products.OrderBy(x => x.Name);
-            
-            if(filters != null)
-            {
-                if (filters.ProductTypeList != null && filters.ProductTypeList.Length > 0)
-                    products = products.Where(x => filters.ProductTypeList.Contains((int)x.ProductType));
-                if(filters.NameLike != null)
-                    products = products.Where(x => x.Name.ToLower().Contains(filters.NameLike.ToLower()));
-                if(filters.DescriptionLike != null)
-                    products = products.Where(x => x.Description.ToLower().Contains(filters.DescriptionLike.ToLower()));
-            }
+            var products = repository.Get(
+                filter: repository.CreateFiltersFunctionsArray(filters), 
+                page: page, 
+                orderBy: x => x.Name);
+
             int count = products.Count();
 
-            if(page.PageIndex != 0)
-                products = products.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
-
-            return Ok(new { values = products.Select(ConvertToProductDTO), count });
+            return Ok(new { values = products.Select(repository.ConvertToProductDTO), count });
         }
 
         [HttpGet("types")]
-        public async Task<IActionResult> GetProductTypes()
+        public IActionResult GetProductTypes()
         {
             var productTypes = new Dictionary<int, string>();
             var enumValues = (int[])Enum.GetValues(typeof(ProductType));
@@ -66,10 +47,10 @@ namespace CarpenterAPI.Controllers
             return Ok(productTypes);
         }
 
-        [HttpGet("id:int")]
-        public async Task<IActionResult> GetProduct(int id)
+        [HttpGet("{id:int}")]
+        public IActionResult GetProduct(int id)
         {
-            var product = await dbContext.Products.FindAsync(id);
+            var product = repository.GetByID(id);
             
             if(product == null)
             {
@@ -79,23 +60,9 @@ namespace CarpenterAPI.Controllers
             return Ok(product);
         }
 
-        [HttpGet("name")]
-        public async Task<IActionResult> GetProducts(string name)
-        {
-            var products = dbContext.Products.Where(x => x.Name.Equals(name)).ToList();
-
-            if(products == null)
-                return NotFound();
-
-            return Ok(products);
-        }
-
         [HttpPost]
-        public async Task<IActionResult> AddProduct(AddProductRequest addProductRequest)
+        public IActionResult AddProduct(AddProductRequest addProductRequest)
         {
-            if(!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             var product = new Product()
             {
                 Name = addProductRequest.Name,
@@ -103,20 +70,17 @@ namespace CarpenterAPI.Controllers
                 ProductType = addProductRequest.ProductType
             };
 
-            await dbContext.Products.AddAsync(product);
-            await dbContext.SaveChangesAsync();
+            repository.Insert(product);
+            repository.Save();
 
             return Ok(product);
         }
 
         [HttpPut]
         [Route("{id:int}")]
-        public async Task<IActionResult> UpdateProduct([FromRoute] int id, UpdateProductRequest updateProductRequest)
+        public IActionResult UpdateProduct([FromRoute] int id, UpdateProductRequest updateProductRequest)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var product = await dbContext.Products.FindAsync(id);
+            var product = repository.GetByID(id);
 
             if (product == null)
                 return NotFound();
@@ -125,22 +89,22 @@ namespace CarpenterAPI.Controllers
             product.Name = updateProductRequest.Name;
             product.ProductType = updateProductRequest.ProductType;
 
-            await dbContext.SaveChangesAsync();
+            repository.Save();
 
             return Ok(product);
         }
 
         [HttpDelete]
         [Route("{id:int}")]
-        public async Task<IActionResult> DeleteProduct([FromRoute] int id)
+        public IActionResult DeleteProduct([FromRoute] int id)
         {
-            var product = await dbContext.Products.FindAsync(id);
+            var product = repository.GetByID(id);
 
             if(product == null)
                 return NotFound();
 
-            dbContext.Products.Remove(product);
-            await dbContext.SaveChangesAsync();
+            repository.Delete(id);
+            repository.Save();
 
             return Ok(product);
         }

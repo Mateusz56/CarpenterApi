@@ -2,10 +2,8 @@
 using CarpenterAPI.Models.Component;
 using CarpenterAPI.Models.Product;
 using CarpenterAPI.Models.Receiving;
+using CarpenterAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace CarpenterAPI.Controllers
 {
@@ -13,37 +11,35 @@ namespace CarpenterAPI.Controllers
     [ApiController]
     public class ReceivingDocumentController : ControllerBase
     {
-        private readonly APIDBContext dbContext;
+        private readonly ReceivingDocumentRepository repository;
 
         public ReceivingDocumentController(APIDBContext dbContext)
         {
-            this.dbContext = dbContext;
+            repository = new ReceivingDocumentRepository(dbContext);
         }
 
-        // GET: api/<ReceivingDocumentController>
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(dbContext.ReceivingDocuments.Include(x => x.Lines).Include("Lines.Product"));
+            return Ok(repository.Get(null, null, "Lines,Lines.Product", null));
         }
 
-        // POST api/<ReceivingDocumentController>
+        [HttpGet("{id:int}")]
+        public IActionResult GetSingle(int id)
+        {
+            var document = repository.GetByID(id);
+            if(document == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(document);
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody] AddReceivingDocumentRequest addRequest)
         {
-            var lines = new List<ReceivingDocumentLine>();
-            foreach(var productQuantity in addRequest.ProductQuantities)
-            {
-                var product = dbContext.Products.Find(productQuantity.ProductId);
-                if (product == null)
-                    return NotFound();
-
-                lines.Add(new ReceivingDocumentLine
-                {
-                    Product = product,
-                    Quantity = productQuantity.Quantity
-                });
-            }
+            var lines = repository.CreateLines(addRequest.ProductQuantities);
 
             var receivingDocument = new ReceivingDocument
             {
@@ -52,21 +48,31 @@ namespace CarpenterAPI.Controllers
                 Lines = lines.ToArray()
             };
 
-            dbContext.AddRange(lines);
-            dbContext.Add(receivingDocument);
-            dbContext.SaveChanges();
+            repository.InsertLines(lines);
+            repository.Insert(receivingDocument);
+            repository.Save();
             return Ok(receivingDocument);
         }
 
-        // PUT api/<ReceivingDocumentController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut("{id:int}")]
+        public IActionResult Put(int id, [FromBody] UpdateReceivingDocumentRequest request)
         {
+            var document = repository.GetByID(id);
+            if (document == null) 
+            { 
+                return NotFound(); 
+            }
+
+            repository.RemoveLines(document);
+            document.Lines = repository.CreateLines(request.ProductQuantities);
+            repository.InsertLines(document.Lines.ToArray());
+            repository.Save();
+            return Ok(document);
         }
 
         // DELETE api/<ReceivingDocumentController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(int id)  
         {
         }
     }

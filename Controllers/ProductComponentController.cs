@@ -4,6 +4,9 @@ using CarpenterAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using CarpenterAPI.Models.Component;
 using Microsoft.EntityFrameworkCore;
+using CarpenterAPI.Repository;
+using System.Linq.Expressions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace CarpenterAPI.Controllers
 {
@@ -11,92 +14,54 @@ namespace CarpenterAPI.Controllers
     [Route("[controller]")]
     public class ProductComponentController : Controller
     {
-        private readonly APIDBContext dbContext;
+        private readonly ProductComponentRepository repository;
 
         public ProductComponentController(APIDBContext dbContext)
         {
-            this.dbContext = dbContext;
-        }
-
-        private ProductComponentDTO ConvertToProductComponentDTO(ProductComponent component)
-        {
-            return new ProductComponentDTO
-            {
-                Id = component.Id,
-                ProductName = component.Product.Name,
-                ComponentName = component.ComponentProduct.Name,
-                ComponentDescription = component.ComponentProduct.Description,
-                Quantity = component.Quantity,
-                Required = component.Required
-            };
+            repository = new ProductComponentRepository(dbContext);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetProductComponents(int productID)
+        public IActionResult GetProductComponents(int productID)
         {
-            return Ok(dbContext.ProductComponents
-                .Where(x => x.Product.Id == productID)
-                .Include(x => x.Product)
-                .Include(x => x.ComponentProduct)
-                .Select(ConvertToProductComponentDTO));
+            return Ok(repository.Get(
+                filter: new Expression<Func<ProductComponent, bool>>[] { x => x.Product.Id == productID },
+                includeProperties: "Product,ComponentProduct"
+                )
+                .Select(repository.ConvertToProductComponentDTO));
         }
 
         [HttpPost]
-        public async Task<IActionResult> LinkComponent(LinkComponentRequest linkComponentRequest)
+        public IActionResult LinkComponent(LinkComponentRequest linkComponentRequest)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var productComponent = repository.CreateProductComponent(linkComponentRequest);
 
-            var product = await dbContext.Products.FindAsync(linkComponentRequest.ProductID);
-            var component = await dbContext.Products.FindAsync(linkComponentRequest.ComponentProductID);
-
-            if(component == null || product == null) 
-            {
-                return NotFound();
-            }
-
-            var productComponent = new ProductComponent()
-            {
-                Product = product,
-                ComponentProduct = component,
-                Quantity = linkComponentRequest.Quantity,
-                Required = linkComponentRequest.Required
-            };
-
-            await dbContext.ProductComponents.AddAsync(productComponent);
-            await dbContext.SaveChangesAsync();
+            repository.Insert(productComponent);
+            repository.Save();
 
             return Ok(productComponent);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateComponents(UpdateProductComponentRequest[] updateComponentsRequest)
+        public IActionResult UpdateComponents(UpdateProductComponentRequest[] updateComponentsRequest)
         {
             foreach(var updateRequest in updateComponentsRequest)
             {
-                var component = await dbContext.ProductComponents.FindAsync(updateRequest.Id);
-                if (component == null)
-                    return NotFound();
+                var component = repository.GetByID(updateRequest.Id);
 
                 component.Required = updateRequest.Required != null ? updateRequest.Required.Value : component.Required;
                 component.Quantity = updateRequest.Quantity != null ? updateRequest.Quantity.Value : component.Quantity;
             }
 
-            await dbContext.SaveChangesAsync();
+            repository.Save();
             return Ok(updateComponentsRequest);
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteComponent(int[] id)
+        public IActionResult DeleteComponent(int[] id)
         {
-            var components = dbContext.ProductComponents.Where(x => id.Contains(x.Id));
-
-            if (components.Count() == 0)
-                return NotFound();
-
-            dbContext.ProductComponents.RemoveRange(components);
-
-            await dbContext.SaveChangesAsync();
+            var components = repository.Delete(id);
+            repository.Save();
 
             return Ok(components);
         }

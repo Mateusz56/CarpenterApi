@@ -2,9 +2,9 @@
 
 namespace CarpenterAPI.Models.Receiving
 {
-    public class AddReceivingDocumentRequest
+    public class UpdateReceivingDocumentRequest
     {
         [Required, MinLength(1)]
-        public ProductQuantity[] ProductQuantities { get; set;}
+        public ProductQuantity[] ProductQuantities { get; set; }
     }
 }
