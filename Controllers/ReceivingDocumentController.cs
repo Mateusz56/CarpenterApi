@@ -63,9 +63,18 @@ namespace CarpenterAPI.Controllers
                 return NotFound(); 
             }
 
+            if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
+                return Forbid();
+
             repository.RemoveLines(document);
-            document.Lines = repository.CreateLines(request.ProductQuantities);
-            repository.InsertLines(document.Lines.ToArray());
+            
+            var lines = repository.CreateLines(request.ProductQuantities);
+            
+            document.Lines = lines.ToList();
+            repository.InsertLines(lines);
+
+            document.Status = ReceivingDocumentStatus.Modified;
+
             repository.Save();
             return Ok(document);
         }
