@@ -21,7 +21,8 @@ namespace CarpenterAPI.Repository
             Expression<Func<TEntity, bool>>[] filter = null,
             Expression<Func<TEntity, object>> orderBy = null,
             string includeProperties = "",
-            Paging page = null)
+            Paging page = null,
+            bool orderByDescending = false)
         {
             IQueryable<TEntity> query = dbContext.Set<TEntity>();
 
@@ -43,7 +44,7 @@ namespace CarpenterAPI.Repository
 
             if (orderBy != null)
             {
-                query = query.OrderBy(orderBy);
+                query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
             }
 
              return query.ToList();

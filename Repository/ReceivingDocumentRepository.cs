@@ -1,6 +1,8 @@
 ﻿using CarpenterAPI.Data;
+using CarpenterAPI.Models.Product;
 using CarpenterAPI.Models.Receiving;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace CarpenterAPI.Repository
 {
@@ -45,6 +47,32 @@ namespace CarpenterAPI.Repository
                 .Include("Lines")
                 .Include("Lines.Product")
                 .FirstOrDefault(x => x.Id == id);
+        }
+
+        public Expression<Func<ReceivingDocument, bool>>[] CreateFiltersFunctionsArray(ReceivingDocumentFilters filters)
+        {
+            if (filters != null)
+            {
+                var functions = new List<Expression<Func<ReceivingDocument, bool>>>();
+                if (filters.IdMin != null)
+                    functions.Add(x => x.Id >= filters.IdMin);
+                if (filters.IdMax != null)
+                    functions.Add(x => x.Id <= filters.IdMax);
+                if (filters.StatusList != null && filters.StatusList.Length > 0)
+                    functions.Add(x => filters.StatusList.Contains((int)x.Status));
+                if (filters.ValidatedBefore != null)
+                    functions.Add(x => x.ValidationDate <= filters.ValidatedBefore);
+                if (filters.ValidatedAfter != null)
+                    functions.Add(x => x.ValidationDate >= filters.ValidatedAfter);
+                if (filters.CreatedBefore != null)
+                    functions.Add(x => x.CreatedDate <= filters.CreatedBefore);
+                if (filters.CreatedAfter != null)
+                    functions.Add(x => x.CreatedDate >= filters.CreatedAfter);
+
+                return functions.ToArray();
+            }
+
+            return null;
         }
     }
 }

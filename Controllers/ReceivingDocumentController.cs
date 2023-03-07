@@ -1,4 +1,5 @@
 ﻿using CarpenterAPI.Data;
+using CarpenterAPI.Models;
 using CarpenterAPI.Models.Component;
 using CarpenterAPI.Models.Product;
 using CarpenterAPI.Models.Receiving;
@@ -19,9 +20,9 @@ namespace CarpenterAPI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get([FromQuery] ReceivingDocumentFilters filters, [FromQuery] Paging paging)
         {
-            return Ok(repository.Get(null, null, "Lines,Lines.Product", null));
+            return Ok(repository.Get(repository.CreateFiltersFunctionsArray(filters), (x) => x.CreatedDate, "Lines,Lines.Product", paging, true));
         }
 
         [HttpGet("{id:int}")]
