@@ -22,7 +22,9 @@ namespace CarpenterAPI.Controllers
         [HttpGet]
         public IActionResult Get([FromQuery] ReceivingDocumentFilters filters, [FromQuery] Paging paging)
         {
-            return Ok(repository.Get(repository.CreateFiltersFunctionsArray(filters), (x) => x.CreatedDate, "Lines,Lines.Product", paging, true));
+            var documents = repository.GetWithCount(out int count, repository.CreateFiltersFunctionsArray(filters), (x) => x.CreatedDate, "Lines,Lines.Product", paging, true);
+ 
+            return Ok(new {values = documents, count});
         }
 
         [HttpGet("{id:int}")]
@@ -65,7 +67,7 @@ namespace CarpenterAPI.Controllers
             }
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
-                return Forbid();
+                return Conflict();
 
             repository.RemoveLines(document);
             
@@ -86,7 +88,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
-                return Forbid();
+                return Conflict();
 
             document.Status = ReceivingDocumentStatus.Accepted;
             document.ValidationDate = DateTime.Now;
@@ -102,7 +104,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
-                return Forbid();
+                return Conflict();
 
             document.Status = ReceivingDocumentStatus.Rejected;
 
@@ -116,7 +118,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
-                return Forbid();
+                return Conflict();
 
             document.Status = ReceivingDocumentStatus.Archived;
 

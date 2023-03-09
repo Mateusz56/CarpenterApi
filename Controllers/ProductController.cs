@@ -5,7 +5,10 @@ using CarpenterAPI.Repository;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Data.Common;
 
 namespace CarpenterAPI.Controllers
 {
@@ -23,12 +26,12 @@ namespace CarpenterAPI.Controllers
         [HttpGet]
         public IActionResult GetProduct([FromQuery] Paging page,[FromQuery] ProductFilters filters)
         {
-            var products = repository.Get(
+            var products = repository.GetWithCount(
+                out int count,
                 filter: repository.CreateFiltersFunctionsArray(filters), 
                 page: page, 
                 orderBy: x => x.Name);
 
-            int count = products.Count();
 
             return Ok(new { values = products.Select(repository.ConvertToProductDTO), count });
         }
@@ -103,7 +106,13 @@ namespace CarpenterAPI.Controllers
             if(product == null)
                 return NotFound();
 
+
+            var deleteError = repository.CheckIfCanDelete(product);
+            if (deleteError != null)
+                return Conflict(new { errors = deleteError});
+
             repository.Delete(id);
+
             repository.Save();
 
             return Ok(product);

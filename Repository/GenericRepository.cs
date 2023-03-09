@@ -28,7 +28,7 @@ namespace CarpenterAPI.Repository
 
             if (filter != null)
             {
-                foreach(var filterExpression in filter)
+                foreach (var filterExpression in filter)
                     query = query.Where(filterExpression);
             }
 
@@ -37,7 +37,7 @@ namespace CarpenterAPI.Repository
                 query = query.Include(includeProperty);
             }
 
-            if(page != null && page.PageIndex != 0)
+            if (page != null && page.PageIndex != 0)
             {
                 query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
             }
@@ -47,7 +47,43 @@ namespace CarpenterAPI.Repository
                 query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
             }
 
-             return query.ToList();
+            return query.ToList();
+        }
+
+        public virtual IEnumerable<TEntity> GetWithCount(
+            out int count,
+            Expression<Func<TEntity, bool>>[] filter = null,
+            Expression<Func<TEntity, object>> orderBy = null,
+            string includeProperties = "",
+            Paging page = null,
+            bool orderByDescending = false)
+        {
+            IQueryable<TEntity> query = dbContext.Set<TEntity>();
+
+            if (filter != null)
+            {
+                foreach (var filterExpression in filter)
+                    query = query.Where(filterExpression);
+            }
+
+            foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
+
+            count = query.Count();
+
+            if (page != null && page.PageIndex != 0)
+            {
+                query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
+            }
+
+            if (orderBy != null)
+            {
+                query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
+            }
+
+            return query.ToList();
         }
 
         public virtual TEntity GetByID(object id)
