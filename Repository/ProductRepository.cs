@@ -39,5 +39,10 @@ namespace CarpenterAPI.Repository
                 ProductTypeName = Enum.GetName(typeof(ProductType), product.ProductType)
             };
         }
+
+        public string CheckIfCanDelete(Product product)
+        {
+            return dbContext.ReceivingDocumentLines.Any(x => x.Product == product) ? "Can't remove this product. It is referenced by receiving document." : null;
+        }
     }
 }
