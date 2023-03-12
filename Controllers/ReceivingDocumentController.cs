@@ -67,7 +67,7 @@ namespace CarpenterAPI.Controllers
             }
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
-                return Conflict();
+                return Conflict(new { errorMessage = repository.InvalidStatusErrorMessage });
 
             repository.RemoveLines(document);
             
@@ -88,7 +88,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
-                return Conflict();
+                return Conflict(new { errorMessage = repository.InvalidStatusErrorMessage });
 
             document.Status = ReceivingDocumentStatus.Accepted;
             document.ValidationDate = DateTime.Now;
@@ -104,7 +104,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified)
-                return Conflict();
+                return Conflict(new { errorMessage = repository.InvalidStatusErrorMessage });
 
             document.Status = ReceivingDocumentStatus.Rejected;
 
@@ -118,7 +118,7 @@ namespace CarpenterAPI.Controllers
             var document = repository.GetByID(id);
 
             if (document.Status != ReceivingDocumentStatus.New && document.Status != ReceivingDocumentStatus.Modified && document.Status != ReceivingDocumentStatus.Rejected)
-                return Conflict();
+                return Conflict(new { errorMessage = repository.InvalidStatusErrorMessage });
 
             document.Status = ReceivingDocumentStatus.Archived;
 

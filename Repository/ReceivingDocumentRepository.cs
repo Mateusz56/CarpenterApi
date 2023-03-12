@@ -12,6 +12,8 @@ namespace CarpenterAPI.Repository
         {
         }
 
+        public string InvalidStatusErrorMessage = "Selected receiving document has invalid status for this operation.";
+
         public ReceivingDocumentLine[] CreateLines(ProductQuantity[] productQuantities)
         {
             var lines = new List<ReceivingDocumentLine>();
