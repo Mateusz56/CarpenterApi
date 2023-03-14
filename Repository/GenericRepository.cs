@@ -37,14 +37,14 @@ namespace CarpenterAPI.Repository
                 query = query.Include(includeProperty);
             }
 
-            if (page != null && page.PageIndex != 0)
-            {
-                query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
-            }
-
             if (orderBy != null)
             {
                 query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
+            }
+
+            if (page != null && page.PageIndex != 0)
+            {
+                query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
             }
 
             return query.ToList();
@@ -73,14 +73,14 @@ namespace CarpenterAPI.Repository
 
             count = query.Count();
 
-            if (page != null && page.PageIndex != 0)
-            {
-                query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
-            }
-
             if (orderBy != null)
             {
                 query = orderByDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
+            }
+
+            if (page != null && page.PageIndex != 0)
+            {
+                query = query.Skip((page.PageIndex - 1) * page.PageSize).Take(page.PageSize);
             }
 
             return query.ToList();
