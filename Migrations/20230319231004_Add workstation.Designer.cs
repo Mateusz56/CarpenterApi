@@ -3,6 +3,7 @@ using System;
 using CarpenterAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarpenterAPI.Migrations
 {
     [DbContext(typeof(APIDBContext))]
-    partial class APIDBContextModelSnapshot : ModelSnapshot
+    [Migration("20230319231004_Add workstation")]
+    partial class Addworkstation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.4");
@@ -120,8 +123,7 @@ namespace CarpenterAPI.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnOrder(0);
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("AllowMultipleOperations")
                         .HasColumnType("INTEGER");
@@ -140,8 +142,9 @@ namespace CarpenterAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Type")
                         .HasColumnType("INTEGER");
