@@ -1,4 +1,5 @@
 ﻿using CarpenterAPI.Data;
+using CarpenterAPI.Models;
 using CarpenterAPI.Models.Workstation;
 using CarpenterAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,17 @@ namespace CarpenterAPI.Controllers
 
         // GET: api/<WorkstationsController>
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get([FromQuery] WorkstationFilters filters, [FromQuery] Paging page)
         {
-            return Ok(repository.Get());
+            var workstations = repository.GetWithCount(
+                out int count,
+                filter: repository.CreateFiltersFunctionsArray(filters),
+                orderBy: x => x.Name,
+                page: page,
+                orderByDescending: true
+                );
+
+            return Ok(new { count, values = workstations});
         }
 
         // GET api/<WorkstationsController>/5
