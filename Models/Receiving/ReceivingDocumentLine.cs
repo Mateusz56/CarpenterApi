@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using CarpenterAPI.Models.Product;
+using Microsoft.EntityFrameworkCore;
 
 namespace CarpenterAPI.Models.Receiving
 {

@@ -13,6 +13,7 @@ namespace CarpenterAPI.Data
         public DbSet<ReceivingDocument> ReceivingDocuments { get; set; }
         public DbSet<ReceivingDocumentLine> ReceivingDocumentLines { get; set; }
         public DbSet<Workstation> Workstations { get; set; }
+        public DbSet<WorkstationHistory> WorkstationHistories { get; set; }
 
         public APIDBContext(DbContextOptions options) : base(options)
         {

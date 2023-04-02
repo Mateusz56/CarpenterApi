@@ -151,6 +151,29 @@ namespace CarpenterAPI.Migrations
                     b.ToTable("Workstations");
                 });
 
+            modelBuilder.Entity("CarpenterAPI.Models.Workstation.WorkstationHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnOrder(0);
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WorkstationId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkstationId");
+
+                    b.ToTable("WorkstationHistories");
+                });
+
             modelBuilder.Entity("CarpenterAPI.Models.Component.ProductComponent", b =>
                 {
                     b.HasOne("CarpenterAPI.Models.Product.Product", "ComponentProduct")
@@ -183,6 +206,17 @@ namespace CarpenterAPI.Migrations
                         .HasForeignKey("ReceivingDocumentId");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("CarpenterAPI.Models.Workstation.WorkstationHistory", b =>
+                {
+                    b.HasOne("CarpenterAPI.Models.Workstation.Workstation", "Workstation")
+                        .WithMany()
+                        .HasForeignKey("WorkstationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workstation");
                 });
 
             modelBuilder.Entity("CarpenterAPI.Models.Receiving.ReceivingDocument", b =>

@@ -31,14 +31,18 @@ namespace CarpenterAPI.Controllers
                 orderByDescending: true
                 );
 
-            return Ok(new { count, values = workstations});
+            return Ok(new { count, values = workstations });
         }
 
         // GET api/<WorkstationsController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public IActionResult Get(int id)
         {
-            return "value";
+            var workstation = repository.GetByID(id);
+            var workstationHistory = repository.GetWorkstationHistory(workstation);
+            var historyDTO = workstationHistory.Select(repository.CreateWorkstationHistoryDTO);
+
+            return Ok(new { workstation, workstationHistory = historyDTO });
         }
 
         // POST api/<WorkstationsController>
@@ -49,7 +53,7 @@ namespace CarpenterAPI.Controllers
             {
                 Name = request.Name,
                 Description = request.Description,
-                Status = WorkstationStatus.Active,
+                Status = WorkstationStatus.New,
                 Type = request.Type,
                 AllowMultipleOperations = request.AllowMultipleOperations,
                 Icon = request.Icon,
@@ -57,6 +61,29 @@ namespace CarpenterAPI.Controllers
             };
 
             repository.Insert(workstation);
+            repository.InsertWorkstationHistory(new WorkstationHistory
+            {
+                EventDate = DateTime.UtcNow,
+                Workstation = workstation,
+                Status = WorkstationStatus.New
+            });
+            repository.Save();
+            return Ok(workstation);
+        }
+
+        [HttpPost("status/{id:int}")]
+        public IActionResult Post(int id, [FromBody] WorkstationChangeStatusRequest request)
+        {
+            Workstation workstation;
+            try
+            {
+                workstation = repository.ChangeWorkstationStatus(repository.GetByID(id), request.Status);
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new { errorMessage = ex.Message });
+            }
+
             repository.Save();
             return Ok(workstation);
         }

@@ -11,14 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarpenterAPI.Migrations
 {
     [DbContext(typeof(APIDBContext))]
-    [Migration("20230219135405_ReceivingDocument change validation date to nullable")]
-    partial class ReceivingDocumentchangevalidationdatetonullable
+    [Migration("20230402144108_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "7.0.4");
 
             modelBuilder.Entity("CarpenterAPI.Models.Component.ProductComponent", b =>
                 {
@@ -119,6 +119,64 @@ namespace CarpenterAPI.Migrations
                     b.ToTable("ReceivingDocumentLines");
                 });
 
+            modelBuilder.Entity("CarpenterAPI.Models.Workstation.Workstation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnOrder(0);
+
+                    b.Property<bool>("AllowMultipleOperations")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Color")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Icon")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Workstations");
+                });
+
+            modelBuilder.Entity("CarpenterAPI.Models.Workstation.WorkstationHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnOrder(0);
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WorkstationId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkstationId");
+
+                    b.ToTable("WorkstationHistories");
+                });
+
             modelBuilder.Entity("CarpenterAPI.Models.Component.ProductComponent", b =>
                 {
                     b.HasOne("CarpenterAPI.Models.Product.Product", "ComponentProduct")
@@ -151,6 +209,17 @@ namespace CarpenterAPI.Migrations
                         .HasForeignKey("ReceivingDocumentId");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("CarpenterAPI.Models.Workstation.WorkstationHistory", b =>
+                {
+                    b.HasOne("CarpenterAPI.Models.Workstation.Workstation", "Workstation")
+                        .WithMany()
+                        .HasForeignKey("WorkstationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workstation");
                 });
 
             modelBuilder.Entity("CarpenterAPI.Models.Receiving.ReceivingDocument", b =>
